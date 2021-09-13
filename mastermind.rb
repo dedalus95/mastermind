@@ -4,12 +4,18 @@ module Display
     "Do you want to be the maker or the breaker? Input 'maker' or 'breaker'."
   end
 
+  def unavailable
+    require 'colorize'
+    "Unavailable choice".red
+  end
+
   def set_a_code
-    "Write your code (4 digits between 1-6)."
+    "Write your secret code (4 digits between 1-6)."
   end
 
   def invalid_code
-    "Max 4 digits between 1-6"
+    require 'colorize'
+    "Max 4 digits between 1-6".red
   end
 
   def set_sequence
@@ -25,7 +31,7 @@ module Display
   end
 
   def you_lost
-    "You didn't succeed."
+    "The machine broke the code."
   end
 
   def new_game
@@ -35,69 +41,129 @@ module Display
 end
 
 
-class SecretCode 
-  attr_reader :code
-  def initialize(code)
-    @code = code
+class ComputerCode
+  def computer_create_code
+    i = 4
+    code = []
+    until i == 0
+    random = rand(1..6)
+    code << random
+    i -= 1
+    end
+    return code.join
   end
 end
 
-class CurrentCode
-  attr_reader :code
-  def initialize(code)
-    @code = code
-  end
-end
-
-
-class Game
+class HumanCode
   include Display
-  
-  def set_secret_code()
+  def human_create_code
     puts set_a_code
-    code = gets.chomp.to_s
-    return SecretCode.new(code) if correct_sequence(code)
-
-    puts invalid_code
-    set_secret_code
+    code = gets.chomp
+    return code
   end
+end
+
+
+class Maker
+  include Display
+  human_code = HumanCode.new
+  HUMAN = human_code.human_create_code
+
+  def set_computer_code 
+    current_code = ComputerCode.new
+    code = current_code.computer_create_code 
+    puts code
+    return code
+  end
+
+  def maker_game
+
+   code = set_computer_code
+    if code != HUMAN
+      maker_game
+    else
+      puts you_lost
+    end
+  
+  end
+
+end
+
+
+
+# li = Maker.new
+# li.maker_game
+
+
+class Breaker
+  include Display
+  computer_code = ComputerCode.new
+  COMPUTER = computer_code.computer_create_code
+  
+  def maker_or_breaker
+    puts break_or_make
+    ans = gets.chomp.downcase
+    if ans == 'breaker' 
+     breaker_game 
+    elsif
+    ans == 'maker' 
+    puts 'not available yet' 
+    else
+    puts unavailable
+    maker_or_breaker
+    end
+  end
+
 
   def set_current_code
     puts set_sequence
-    code = gets.chomp.to_s
-    return CurrentCode.new(code) if correct_sequence(code)
-
-    puts invalid_code
-    set_current_code
+    return current_code = gets.chomp
   end
+
+
+
+  def breaker_game 
+    current_code = set_current_code
+    check_digits(COMPUTER, current_code)
+    if !correct_sequence(current_code) 
+      puts invalid_code
+     breaker_game
+    else
+     if current_code != COMPUTER 
+      breaker_game 
+     else
+      puts you_won
+     end
+    end
+  end
+
 
   def correct_sequence(code)
     code.match?(/\b[1-6]{4}\b/)
   end
 
-  def codes
-    secret_code = set_secret_code
-    current_code = set_current_code
-    until secret_code.code == current_code.code
-      set_current_code
-    end
-  end
 
-  def computer_generate_code
-    i = 4
-    arr = []
-    until i == 0
-    random = rand(1..6)
-    arr << random
-    i -= 1
+  def check_digits(secret, current)
+    if current.length < 5
+   a = (secret.split('') & current.split('')).flat_map {|n| [n] * [secret.split('').count(n), current.split('').count(n)].min}
+    puts "You got #{a.length} digits right."
+
+   b = secret.split('').zip(current.split(''))
+   c = b.select {|em| em[0] == em[1]}
+   puts "#{c.length} of them are in the right position."
+    else return
     end
-    return arr.join
   end
 
 end
 
-lo = Game.new
+lo = Breaker.new
+lo.maker_or_breaker
 
-lo.codes
+
+
+
+
+
 
 
