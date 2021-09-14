@@ -30,8 +30,12 @@ module Display
     "You broke the code."
   end
 
-  def you_lost
+  def successful_machine
     "The machine broke the code."
+  end
+
+  def unsuccessful_machine
+    "The machine didn't break the code."
   end
 
   def new_game
@@ -40,8 +44,34 @@ module Display
 
 end
 
+module CorrectSequence 
+  def correct_sequence(code)
+    code.match?(/\b[1-6]{4}\b/)
+  end
+end
+
+module CheckDigits 
+  include Display
+  def check_digits(secret, current)
+    if current.length < 5
+   a = (secret.split('') & current.split('')).flat_map {|n| [n] * [secret.split('').count(n), current.split('').count(n)].min}
+    puts "The sequence contains #{a.length} digits right."
+
+   b = secret.split('').zip(current.split(''))
+   c = b.select {|em| em[0] == em[1]}
+   puts "#{c.length} of them are in the right position."
+   if a.length == 4 && c.length == 4
+    return true
+   end
+    else 
+      return
+    end
+  end
+end
+
 
 class ComputerCode
+  
   def computer_create_code
     i = 4
     code = []
@@ -56,110 +86,107 @@ end
 
 class HumanCode
   include Display
+  include CorrectSequence
   def human_create_code
     puts set_a_code
     code = gets.chomp
-    return code
+    return code if correct_sequence(code)
+
+    puts invalid_code
+    human_create_code
   end
 end
 
 
 class Maker
   include Display
-  human_code = HumanCode.new
-  HUMAN = human_code.human_create_code
+  include CheckDigits
+
+  def set_human_code
+    human_code = HumanCode.new
+    human = human_code.human_create_code
+    return human
+  end
 
   def set_computer_code 
-    current_code = ComputerCode.new
-    code = current_code.computer_create_code 
-    puts code
+    computer = ComputerCode.new
+    code = computer.computer_create_code
+    puts code 
     return code
   end
 
   def maker_game
-
-   code = set_computer_code
-    if code != HUMAN
-      maker_game
-    else
-      puts you_lost
+    i = 0
+    human = set_human_code
+    until i == 1200 || check_digits(human, set_computer_code)
+      puts "Attempt n. #{i + 1}"
+      i += 1
     end
-  
+    if i < 1200
+    puts successful_machine 
+    else
+    puts unsuccessful_machine
+    end
   end
 
 end
 
 
 
-# li = Maker.new
-# li.maker_game
-
-
 class Breaker
   include Display
+  include CorrectSequence
+  include CheckDigits
   computer_code = ComputerCode.new
   COMPUTER = computer_code.computer_create_code
   
-  def maker_or_breaker
-    puts break_or_make
-    ans = gets.chomp.downcase
-    if ans == 'breaker' 
-     breaker_game 
-    elsif
-    ans == 'maker' 
-    puts 'not available yet' 
-    else
-    puts unavailable
-    maker_or_breaker
-    end
-  end
-
 
   def set_current_code
     puts set_sequence
     return current_code = gets.chomp
   end
 
-
-
   def breaker_game 
     current_code = set_current_code
-    check_digits(COMPUTER, current_code)
     if !correct_sequence(current_code) 
-      puts invalid_code
+     puts invalid_code
      breaker_game
     else
-     if current_code != COMPUTER 
-      breaker_game 
+     if !check_digits(COMPUTER, current_code) 
+     breaker_game 
      else
-      puts you_won
+     puts you_won
      end
     end
   end
-
-
-  def correct_sequence(code)
-    code.match?(/\b[1-6]{4}\b/)
-  end
-
-
-  def check_digits(secret, current)
-    if current.length < 5
-   a = (secret.split('') & current.split('')).flat_map {|n| [n] * [secret.split('').count(n), current.split('').count(n)].min}
-    puts "You got #{a.length} digits right."
-
-   b = secret.split('').zip(current.split(''))
-   c = b.select {|em| em[0] == em[1]}
-   puts "#{c.length} of them are in the right position."
-    else return
-    end
-  end
-
 end
 
-lo = Breaker.new
-lo.maker_or_breaker
 
+
+
+
+class Play
+  include Display
+
+    def maker_or_breaker
+      puts break_or_make
+      ans = gets.chomp.downcase
+      if ans == 'breaker' 
+        li = Breaker.new
+        li.breaker_game
+      elsif ans == 'maker' 
+      lo = Maker.new
+      lo.maker_game 
+      else
+      puts unavailable
+      maker_or_breaker
+      end
+    end
+end
+
+
+  dim = Play.new
+  dim.maker_or_breaker
 
 
 
