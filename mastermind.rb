@@ -55,11 +55,11 @@ module CheckDigits
   def check_digits(secret, current)
     if current.length < 5
    a = (secret.split('') & current.split('')).flat_map {|n| [n] * [secret.split('').count(n), current.split('').count(n)].min}
-    puts "The sequence contains #{a.length} digits right."
+    puts "The sequence contains #{a.length} right digits."
 
    b = secret.split('').zip(current.split(''))
    c = b.select {|em| em[0] == em[1]}
-   puts "#{c.length} of them are in the right position."
+   puts "#{c.length} of them are in the right position." + "\n\n"
    if a.length == 4 && c.length == 4
     return true
    end
